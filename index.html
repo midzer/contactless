@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <body>
+        <div id="contactThankYou" hidden>
+            Thank you for your message!
+        </div>
+        <form action="https://domain.tld/mailout" id="myContactForm" method="POST">
+            <label>Your Name</label>
+            <input type="text" placeholder="Name" name="name" required data-validation-required-message="Please input your name.">
+                <label>Your eMail</label>
+                <input type="text" placeholder="eMail" name="email" required data-validation-required-message="Please input your eMail adress.">
+                <label>Your message</label>
+                <textarea rows="3" placeholder="Message" name="message" required data-validation-required-message="Please input your message."></textarea>
+                <button type="submit">Send</button>
+        </form>
+        <script>
+        /**
+        * Takes a form node and sends it over AJAX.
+        * @param {HTMLFormElement} form - Form node to send
+        * @param {function} callback - Function to handle onload. 
+        *                              this variable will be bound correctly.
+        */
+
+        function ajaxPost (form, callback) {
+            var url = form.action,
+            xhr = new XMLHttpRequest();
+            
+            //This is a bit tricky, [].fn.call(form.elements, ...) allows us to call .fn
+            //on the form's elements, even though it's not an array. Effectively
+            //Filtering all of the fields on the form
+            var params = [].filter.call(form.elements, function(el) {
+                //Allow only elements that don't have the 'checked' property
+                //Or those who have it, and it's checked for them.
+                return typeof(el.checked) === 'undefined' || el.checked;
+                //Practically, filter out checkboxes/radios which aren't checekd.
+            })
+            .filter(function(el) { return !el.name; }) //Nameless elements die.
+            .filter(function(el) { return el.disabled; }) //Disabled elements die.
+            .map(function(el) {
+                //Map each field into a name=value string, make sure to properly escape!
+                return encodeURIComponent(el.name) + '=' + encodeURIComponent(el.value);
+            })
+            .join('&'); //Then join all the strings by &
+            
+            xhr.open("POST", url);
+            
+            // Changed from application/x-form-urlencoded to application/x-form-urlencoded
+            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            
+            //.bind ensures that this inside of the function is the XHR object.
+            xhr.onload = callback.bind(xhr); 
+            
+            //All preperations are clear, send the request!
+            xhr.send(params);
+        }
+        
+        var form = document.querySelector("#myContactForm");
+        if (form) {
+            ajaxPost(form, function(response) {
+                document.querySelector('#myContactForm').setAttribute('hidden');
+                document.querySelector("#contactThankYou").removeAttribute('hidden');
+            });
+        }
+        </script>
+    </body>
+</html>
